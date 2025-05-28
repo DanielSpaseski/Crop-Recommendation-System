@@ -33,46 +33,38 @@ y = df['Crop Type']
 label_encoder = LabelEncoder()
 y_encoded = label_encoder.fit_transform(y)
 
-# Store the mapping for later reference
+
 crop_mapping = dict(zip(label_encoder.classes_, range(len(label_encoder.classes_))))
 print("\nCrop Type Mapping:")
 for crop, code in crop_mapping.items():
     print(f"{crop}: {code}")
 
-# Simple data augmentation by adding small random variations
+
 augmented_data = []
-for _ in range(5):  # Create 5 variations for each sample
+for _ in range(5):
     for i in range(len(df)):
         row = df.iloc[i].copy()
-        # Add small random variations to numerical features
+
         for col in ['Temparature', 'Humidity', 'Moisture', 'Nitrogen', 'Potassium', 'Phosphorous']:
-            # Add variation of up to ±5% of the original value
             variation = np.random.uniform(-0.05, 0.05) * row[col]
             row[col] += variation
         augmented_data.append(row)
 
-# Create augmented dataframe
 augmented_df = pd.DataFrame(augmented_data)
-# Combine with original data
 combined_df = pd.concat([df, augmented_df], ignore_index=True)
 
-# Check the size of the augmented dataset
 print(f"\nAugmented dataset size: {len(df)}")
 print("Augmented crop distribution:")
 print(combined_df['Crop Type'].value_counts())
 
-# Prepare the features and target from the augmented data
 X = combined_df.drop('Crop Type', axis=1)
 y = combined_df['Crop Type']
 
-# Encode the labels for the augmented dataset
 y_encoded = label_encoder.transform(y)
 
-# Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.25, random_state=42, stratify=y_encoded)
 
 
-# Define a function to evaluate a classifier
 def evaluate_classifier(name, classifier, X_train, X_test, y_train, y_test, scaler=None):
     if scaler:
         X_train_processed = scaler.fit_transform(X_train)
@@ -195,7 +187,6 @@ def tune_hyperparameters(classifier_name, classifier, X, y, scaler):
     
     param_grid = {}
     
-    # Define parameter grids based on classifier type
     if classifier_name == 'Random Forest':
         param_grid = {
             'n_estimators': [50, 100, 200],
@@ -234,13 +225,11 @@ def tune_hyperparameters(classifier_name, classifier, X, y, scaler):
         print(f"No parameter grid defined for {classifier_name}. Skipping tuning.")
         return classifier
     
-    # Create pipeline with scaler and classifier
     pipeline = Pipeline([
         ('scaler', scaler),
         ('classifier', classifier)
     ])
     
-    # Create GridSearchCV
     grid_search = GridSearchCV(
         pipeline,
         {f'classifier__{key}': val for key, val in param_grid.items()},
@@ -249,22 +238,18 @@ def tune_hyperparameters(classifier_name, classifier, X, y, scaler):
         verbose=1
     )
     
-    # Fit the grid search
     grid_search.fit(X, y)
     
     print(f"Best parameters: {grid_search.best_params_}")
     print(f"Best cross-validation score: {grid_search.best_score_:.4f}")
     
-    # Return the best estimator
     return grid_search.best_estimator_.named_steps['classifier']
 
-if len(combined_df) >= 50:  # Only tune if we have a reasonable amount of data
+if len(combined_df) >= 50:
     best_tuned_classifier = tune_hyperparameters(best_classifier_name, best_classifier, X, y, scaler)
-    
-    # Compare tuned vs untuned model
+
     untuned_result = best_result
-    
-    # Evaluate tuned model
+
     tuned_result = evaluate_classifier(
         f"Tuned {best_classifier_name}",
         best_tuned_classifier,
@@ -276,14 +261,14 @@ if len(combined_df) >= 50:  # Only tune if we have a reasonable amount of data
     print(f"Original {best_classifier_name} CV Score: {untuned_result['CV Mean']:.4f}")
     print(f"Tuned {best_classifier_name} CV Score: {tuned_result['CV Mean']:.4f}")
     
-    # Save the best model
+
     import pickle
     with open('best_crop_recommendation_model.pkl', 'wb') as f:
         pickle.dump(best_tuned_classifier, f)
     with open('scaler.pkl', 'wb') as f:
         pickle.dump(scaler, f)
 else:
-    # Save the best model without tuning
+
     import pickle
     with open('best_crop_recommendation_model.pkl', 'wb') as f:
         pickle.dump(best_classifier, f)
@@ -292,9 +277,7 @@ else:
 
 print("\nModel evaluation and selection completed!")
 
-# Function to predict crop based on the best model
 def predict_crop(temperature, humidity, moisture, nitrogen, potassium, phosphorous, model, scaler):
-    # Create a DataFrame with the input parameters
     input_data = pd.DataFrame({
         'Temparature': [temperature],
         'Humidity': [humidity],
@@ -303,19 +286,14 @@ def predict_crop(temperature, humidity, moisture, nitrogen, potassium, phosphoro
         'Potassium': [potassium],
         'Phosphorous': [phosphorous]
     })
-    
-    # Scale the input data
+
     input_scaled = scaler.transform(input_data)
-    
-    # Make prediction
+
     prediction = model.predict(input_scaled)
-    
-    # If the model has predict_proba method
+
     if hasattr(model, 'predict_proba'):
-        # Get prediction probabilities
         proba = model.predict_proba(input_scaled)
         
-        # Get all crops with their probabilities
         crop_probs = list(zip(model.classes_, proba[0]))
         crop_probs.sort(key=lambda x: x[1], reverse=True)
         
@@ -323,13 +301,11 @@ def predict_crop(temperature, humidity, moisture, nitrogen, potassium, phosphoro
     else:
         return prediction[0], None
 
-# Load the best model (this would typically be done in a separate file)
 with open('best_crop_recommendation_model.pkl', 'rb') as f:
     best_model = pickle.load(f)
 with open('scaler.pkl', 'rb') as f:
     scaler = pickle.load(f)
 
-# Example usage
 print("\nExample prediction using the best model:")
 crop, probabilities = predict_crop(
     temperature=28.0,
