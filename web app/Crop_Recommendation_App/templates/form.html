@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropWise</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #28a745;
+            --secondary-green: #20c997;
+            --light-green: #d4edda;
+            --dark-green: #155724;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-container {
+            padding: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background: rgba(248, 249, 250, 0.8);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 3;
+        }
+
+        .btn-predict {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            border: none;
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-predict:hover {
+            background: linear-gradient(135deg, var(--secondary-green), var(--primary-green));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+            color: white;
+        }
+
+        .prediction-result {
+            background: linear-gradient(135deg, var(--light-green), rgba(255, 255, 255, 0.9));
+            border: 2px solid var(--primary-green);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .prediction-result h2 {
+            color: var(--dark-green);
+            margin-bottom: 0;
+        }
+
+        .crop-icon {
+            font-size: 3rem;
+            color: var(--primary-green);
+            margin-bottom: 1rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .parameter-card {
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .parameter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .form-container {
+                padding: 1.5rem;
+            }
+
+            .parameter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <div class="header-section">
+                <div class="header-content">
+                    <i class="fas fa-seedling crop-icon"></i>
+                    <h1 class="mb-2">CropWise</h1>
+                    <p class="mb-0 opacity-75">Advanced Crop Recommendation System</p>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="parameter-grid">
+                        <div class="parameter-card">
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-cloud-sun me-2"></i>Environmental Conditions
+                            </h5>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-thermometer-half"></i>
+                                    Temperature (°C)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" step="any" name="temperature" class="form-control" required placeholder="e.g., 25.5">
+                                    <span class="input-icon">°C</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-tint"></i>
+                                    Humidity (%)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" step="any" name="humidity" class="form-control" required placeholder="e.g., 65.0">
+                                    <span class="input-icon">%</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-0">
+                                <label class="form-label">
+                                    <i class="fas fa-droplet"></i>
+                                    Soil Moisture (%)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" step="any" name="moisture" class="form-control" required placeholder="e.g., 40.0">
+                                    <span class="input-icon">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="parameter-card">
+                            <h5 class="mb-3 text-success">
+                                <i class="fas fa-flask me-2"></i>Soil Nutrients
+                            </h5>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-leaf"></i>
+                                    Nitrogen (N) - ppm
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" name="nitrogen" class="form-control" required placeholder="e.g., 20">
+                                    <span class="input-icon">ppm</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-seedling"></i>
+                                    Potassium (K) - ppm
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" name="potassium" class="form-control" required placeholder="e.g., 15">
+                                    <span class="input-icon">ppm</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-0">
+                                <label class="form-label">
+                                    <i class="fas fa-microscope"></i>
+                                    Phosphorous (P) - ppm
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" name="phosphorous" class="form-control" required placeholder="e.g., 10">
+                                    <span class="input-icon">ppm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-predict">
+                            <i class="fas fa-magic me-2"></i>
+                            Predict Optimal Crop
+                        </button>
+                    </div>
+                </form>
+
+                {% if prediction %}
+                <div class="prediction-result">
+                    <i class="fas fa-award crop-icon"></i>
+                    <h2>Recommended Crop: <strong class="text-success">{{ prediction }}</strong></h2>
+                    <p class="text-muted mb-0">Based on your soil and environmental conditions</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value) {
+                    this.style.borderColor = '#28a745';
+                } else {
+                    this.style.borderColor = '#e9ecef';
+                }
+            });
+        });
+
+        document.querySelector('form').addEventListener('submit', function() {
+            const button = document.querySelector('.btn-predict');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+            button.disabled = true;
+        });
+    </script>
+</body>
+</html>
